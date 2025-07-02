@@ -23,16 +23,21 @@ package initq
 				   - Spellchecked. (Oh my gosh - my spelling!)
 				   - No code changes, no version changes (until module name
 				     re-write).
+				   - Official module path was changed.
+				   - Versioned 0.3.0.
 */
 
 // VersionString is the version of the project.
-const VersionString = "0.2.0"
+const VersionString = "0.3.0"
 
 /*
 	ToDos:
-	[ ] Proper module name.
+	[ ] Clearer documentation is always appreciated. This is a low-priority ask
+	    and is not tied to a specific deliverable. That said, ALL types, funcs,
+		etc... should have clear and complete documentation.
 
 	Done:
+	[X] Proper module name.
 	[X] Improve documentation.
 	[X] Clean up remaining previous module name references. To include file
 	    renames.
