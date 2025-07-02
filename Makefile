@@ -21,7 +21,7 @@ cover:
 	@go test -coverprofile=coverage.out
 	@go tool cover -html=coverage.out
 
-# clean (only) removes the coverage.out file.
+# clean (only) removes the coverage.out file (no artifacts).
 clean:
 	@printf "Cleaning test artifacts..."
 	@rm -f coverage.out

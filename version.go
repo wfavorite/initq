@@ -8,7 +8,7 @@ package initq
 				     of a struct, not a function (pig) return value.
 					 (https://en.wikipedia.org/wiki/Pigging)
 				   - Semaphores are intentionally omitted (as explicit items).
-				     Non-detectable dependences can be specified with a
+				     Non-detectable dependencies can be specified with a
 					 reference to the (silent) dependency in the Add() method.
                    - Basic documentation.
 	0.1.0   25-7-2 - Module rename.
@@ -18,6 +18,11 @@ package initq
 	                 module name. (Removed RunQ references.)
 				   - Added markdown. (Several commits are sure to follow to
 				     get the content right.)
+	0.3.0   25-7-2 - Markdown cleanup.
+	               - Code documentation / comment cleanup.
+				   - Spellchecked. (Oh my gosh - my spelling!)
+				   - No code changes, no version changes (until module name
+				     re-write).
 */
 
 // VersionString is the version of the project.
@@ -25,10 +30,10 @@ const VersionString = "0.2.0"
 
 /*
 	ToDos:
-    [_] Improve documentation.
 	[ ] Proper module name.
 
 	Done:
+	[X] Improve documentation.
 	[X] Clean up remaining previous module name references. To include file
 	    renames.
 	[Q] Author. (Don't do this if you intend to publish.)

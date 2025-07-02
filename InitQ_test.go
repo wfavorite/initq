@@ -5,7 +5,7 @@ import "testing"
 /* ======================================================================== */
 /*
 	This is the CoreData structure that sits at the heart of the application.
-	The initialiazation methods are called on it, to initialize data in it,
+	The initialization methods are called on it, to initialize data in it,
 	and processes that use it.
 
 	Things that tend to exist here:
@@ -22,7 +22,7 @@ type coredata struct {
 	//
 	// Here i just use booleans for test.
 
-	Conf bool // Config read from disk (after command line specifys where)
+	Conf bool // Config read from disk (after command line specifies where)
 	Cmdl bool // Cmdline is parsed first (a requirement to find the config)
 	Data bool // Data is the database connector (requires config)
 	Serv bool // Service is the service setup which requires

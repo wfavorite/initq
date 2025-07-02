@@ -46,8 +46,8 @@ Setup functions are responsible for:
 
 - Being able to determine if dependent components have completed. For example; The ``ReadConfigFile()`` method should know if the ``ParseCommandLine()`` completed.
 - If a dependent component has yet to initialize, return ``initq.TryAgain``.
-- If a *bad thing* happened (like a command line typo, or a missing/curropted config file), set an error message and return ``initq.Stop``. (initq does not handle error messages. The expectation is that the setup methods would set that in the core structure they are called on. See notes on "Internal Errors".)
-- If the component was properly setup, then return ``initq.Satisfied``. This signifies that the requirement need not be tried again. (If the 'semaphore' dependency method is used, then this signfiies completion of the requriement.)
+- If a *bad thing* happened (like a command line typo, or a missing/corrupted config file), set an error message and return ``initq.Stop``. (initq does not handle error messages. The expectation is that the setup methods would set that in the core structure they are called on. See notes on "Internal Errors".)
+- If the component was properly setup, then return ``initq.Satisfied``. This signifies that the requirement need not be tried again. (If the 'semaphore' dependency method is used, then this signifies completion of the requirement.)
 
 ## Internal Errors
 
@@ -77,6 +77,22 @@ Here is an example of a function that has no clear evidence of success (other th
 
 In the above example:
 
-- ``SyncTimeClock()`` either works or it does not. It does not modify the environment such that it can be known to have successfully completed. If it is successful it return ``initq.Success``, if not, then it returns a ``initq.Stop`` that will stop processing of the Q.
+- ``SyncTimeClock()`` either works or it does not. It does not modify the environment such that it can be known to have successfully completed. If it is successful it return ``initq.Satisfied``, if not, then it returns a ``initq.Stop`` that will stop processing of the Q.
 - ``SyncTimeClock()`` would *ideally* be a method (so it can easily set an error message), but was specified as a function because it suggests it has 'undetectable' state. A method is typically used for this reason, but a function that never fails would be a possible use case.
-- ``StartScheduler()`` sets a "semaphore requirement" on the "settime" task. This means that the ``StartScheduler()`` method will not be called until ``SyncTimeClock()`` has returned ``initq.Success``.
+- ``StartScheduler()`` sets a "semaphore requirement" on the "settime" task. This means that the ``StartScheduler()`` method will not be called until ``SyncTimeClock()`` has returned ``initq.Satisfied``.
+
+## Design notes
+
+This was originally written (within my company) as "startq". That code belongs to my previous employer - so i wrote a entirely new and better solution. I encourage all users of the previous to consider the newer, better module here.
+
+The original version used a [pig](https://en.wikipedia.org/wiki/Pigging) function that was used to determine how many times the Q was iterated. This was totally unnecessary and a complication on a really simple thing. Now more functionality (to include the 'semaphore' option) has been placed into the Q processing loops.
+
+The original version had a *bolt on* concept of a semaphore. Usage throughout dozens of projects determined that the entire semaphore concept was not the *preferred method* of handling dependencies. In practical experience, the goal was to *not* use explicit semaphores, but use indications of success rather than flags. And yes, indications of success very well can be semaphore-ish. An initialized pointer/structure is indication that that dependent requirement was successfully completed - it acts as a semaphore. I did choose to include a much cleaner and better integrated semaphore approach - mainly for appeal to those who 'need' it for some reason.
+
+This Q method really is a simple thing. It doesn't work on magic, it is not rocket science, it just makes tons of application initialization code more approachable. The idea is that instead of scattering tons of dependency checks and requirements in a (series of) function(s), the dependencies are encapsulated in each of the initialization calls. There are lots of ways - i am sure - to work this problem, but this approach works really well in practice.
+
+As to why *i* use it:
+
+1. I found that it was (slightly) challenging to keep lots of do-this-then-that initialization code clean. Inserting new requirements became an ordering exercise - even when the requirement had no dependencies. Then there is the boiler-plate error / dependency handling (that causes some localized code sprawl). A few months later one looks back on their code and asks: "Why did i choose to initialize this first? Do i need to put things before or after it?". If the dependencies are coded in the init methods, then it tends to be more localized and clear.
+2. Initialization code is mostly *static* and *boring*. Perhaps hyperbole, but in my experience mostly true. When you *do* visit it, i find that inserting new initialization requirements into the code is much simpler when it is highly localized to a specific function or method.
+3. The block of ``Add()`` methods becomes a convenient jump-off location to go to the methods. If this sits in ``main()`` then it becomes an 'index' of requirements rather than lots of boiler-plate code that must be parsed to find a thing. If i am curious about command line options that might be of issue, i just right click on the function reference in the ``Add()`` call and jump to the specific requirement.

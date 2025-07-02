@@ -1,5 +1,5 @@
 // Package initq implements an application startup 'run' queue of requirements
-// for the application to run. A run Q is filled with functions / methods
+// for the application to run. An init Q is filled with functions / methods
 // that are responsible for identifying requirements and handling individual
 // initialization tasks.
 //
@@ -11,9 +11,9 @@
 //   - Config file is read to find service configuration.
 //   - Service is configured from the specified config.
 //
-// As long as each "Run Q requirement function" knows about dependencies (or
+// As long as each "Init Q requirement function" knows about dependencies (or
 // the dependencies are expressed as 'built-in semaphores') then the items
-// can be placed into the Run Q in any order.
+// can be placed into the Init Q in any order.
 //
 // The example as code:
 //
@@ -31,15 +31,15 @@
 //
 // Requirement functions are generally expected to *know* their dependencies
 // and are capable of determining if they were satisfied (before they can
-// conplete). In the above example all three init functions may allocate
+// complete). In the above example all three init functions may allocate
 // new structs (of config, command-line, and service options) that serve as
 // indication that a dependency was completed. It is also to explicitly
 // specify dependent modules.
 //
 // For example:
 //
-//		rq.Add("settime", SetSystemClock)            // No clear indicator of success
-//	 rq.Add("runsvc" , cd.RunService, "settime")  // Explicitly requres settime success
+//	rq.Add("settime", SetSystemClock)            // No clear indicator of success
+//	rq.Add("runsvc" , cd.RunService, "settime")  // Explicitly requires settime success
 package initq
 
 import (
@@ -102,7 +102,11 @@ func (rq *InitQ) Add(name string, f QFunc, deps ...string) {
 
 // Process is used to iteratively work all items in the Q until they are
 // satisfied. If the Q cannot be processed to completion in an expected number
-// of itemrations, then an error is returned.
+// of iterations, then a log.Fatal() is asserted.
+//
+// Under normal conditions, the only error returned from this method is the
+// ErrQStopped error. This is returned when a requirement function (sets an
+// error and) returns the Stop value.
 func (rq *InitQ) Process() (err error) {
 
 	// Fatal is appropriate.
@@ -161,9 +165,9 @@ func (rq *InitQ) Process() (err error) {
 	}
 
 	// The Q has now run as many times as there are items in the Q. Assuming a
-	// worst case ordering of requirements, it *should* be satified by now.
+	// worst case ordering of requirements, it *should* be satisfied by now.
 	//
-	// Reaching here is an assert/fatal condiditon. It is not a transient
+	// Reaching here is an assert/fatal condition. It is not a transient
 	// runtime thing, but a failure in setup of the module. (Eg: defining a Q
 	// with circular / unresolvable requirements.)
 	//
@@ -191,11 +195,10 @@ func (rq *InitQ) Process() (err error) {
 /* ======================================================================== */
 
 // satisfied reports if a named requirement has been satisfied. This is used
-// to check required dependencies of a requiriement.
+// to check required dependencies of a requirement.
 func (rq *InitQ) satisfied(name string) bool {
 
 	for _, rqi := range rq.q {
-
 		// This is a dep we care about.
 		if rqi.name == name {
 			if rqi.state == Satisfied {
