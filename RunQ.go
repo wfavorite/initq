@@ -17,17 +17,17 @@
 //
 // The example as code:
 //
-//		cd := new(CoreData)
-//	 rq := runq.NewRunQ()
+//	cd := new(CoreData)
+//	iq := initq.NewInitQ()
 //
-//		rq.Add("cmdline", cd.ParseCommandLine) // No dependencies
-//	 rq.Add("config", cd.ReadConfig)        // Command line must have been read
-//	 rq.Add("service", cd.StartService)     //
+//	iq.Add("cmdline", cd.ParseCommandLine) // No dependencies
+//	iq.Add("config", cd.ReadConfig)        // Command line must have been read
+//	iq.Add("service", cd.StartService)     //
 //
-//	 if err := rq.Process() ; err != nil {
-//	 	fmt.Fprintln(os.Stderr, "ERROR:", cd.ErrorMsg)
-//	     os.Exit(1)
-//		}
+//	if err := iq.Process() ; err != nil {
+//		fmt.Fprintln(os.Stderr, "ERROR:", cd.ErrorMsg)
+//		os.Exit(1)
+//	}
 //
 // Requirement functions are generally expected to *know* their dependencies
 // and are capable of determining if they were satisfied (before they can
@@ -49,41 +49,41 @@ import (
 
 /* ------------------------------------------------------------------------ */
 
-// QFunc is the prototype for a RunQ requirement.
+// QFunc is the prototype for a InitQ requirement.
 type QFunc func() ReqResult
 
 /* ------------------------------------------------------------------------ */
 
-// RunQ is the primary / core structure for the module. All public methods
+// InitQ is the primary / core structure for the module. All public methods
 // are based on this structure.
-type RunQ struct {
+type InitQ struct {
 	// q is the to-run list.
-	q []*runQItem
+	q []*initQItem
 }
 
 /* ======================================================================== */
 
-// NewRunQ creates a new initialized / empty RunQ.
-func NewRunQ() (rq *RunQ) {
+// NewInitQ creates a new initialized / empty InitQ.
+func NewInitQ() (rq *InitQ) {
 
-	rq = new(RunQ)
+	rq = new(InitQ)
 
 	return
 }
 
 /* ======================================================================== */
 
-// Add puts RunQ requirements on the RunQ. Invalid input is fatal.
+// Add puts InitQ requirements on the initialization Q. Invalid input is fatal.
 //
 // The name is a convenient label that may be used in messaging.
-func (rq *RunQ) Add(name string, f QFunc, deps ...string) {
+func (rq *InitQ) Add(name string, f QFunc, deps ...string) {
 
 	// Fatal on misuse is appropriate.
 	// This is better than letting the user think things went ok when they
 	// did not. This is not a random runtime fatal error, but one that is
 	// designed to be caught early / in test.
 	if rq == nil {
-		log.Fatal("Add called on a nil RunQ.")
+		log.Fatal("Add called on a nil InitQ.")
 	}
 
 	// Check inputs...
@@ -93,7 +93,7 @@ func (rq *RunQ) Add(name string, f QFunc, deps ...string) {
 	}
 
 	// Initialize and append to the Q.
-	rqi := newRunQItem(name, f, deps...)
+	rqi := newInitQItem(name, f, deps...)
 	rq.q = append(rq.q, rqi)
 
 }
@@ -103,7 +103,7 @@ func (rq *RunQ) Add(name string, f QFunc, deps ...string) {
 // Process is used to iteratively work all items in the Q until they are
 // satisfied. If the Q cannot be processed to completion in an expected number
 // of itemrations, then an error is returned.
-func (rq *RunQ) Process() (err error) {
+func (rq *InitQ) Process() (err error) {
 
 	// Fatal is appropriate.
 	// Discussion on *why* is in the Add method.
@@ -120,7 +120,7 @@ func (rq *RunQ) Process() (err error) {
 
 		satisfied := true
 
-		// The next loop is a pass of the RunQ.
+		// The next loop is a pass of the InitQ.
 		for _, rqi := range rq.q {
 
 			// Check for dependencies.
@@ -192,7 +192,7 @@ func (rq *RunQ) Process() (err error) {
 
 // satisfied reports if a named requirement has been satisfied. This is used
 // to check required dependencies of a requiriement.
-func (rq *RunQ) satisfied(name string) bool {
+func (rq *InitQ) satisfied(name string) bool {
 
 	for _, rqi := range rq.q {
 

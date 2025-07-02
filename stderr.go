@@ -19,6 +19,6 @@ var ErrQUnsolvable = fmt.Errorf("unsolvable run Q")
 /* ------------------------------------------------------------------------ */
 
 // ErrQStopped is returned by Process() when a requirement function returns the
-// Stop RunQResult. This is the one condition that the Process() method errors
+// Stop InitQResult. This is the one condition that the Process() method errors
 // on - so it can be checked for, but is not a hard requirement to do so.
 var ErrQStopped = fmt.Errorf("run Q early termination")

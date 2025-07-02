@@ -14,6 +14,8 @@ package initq
 	0.1.0   25-7-2 - Module rename.
 	               - Fixed typo in behaviours.go filename. Yea, i *now* think
 				     it 'correct'.
+	0.2.0   25-7-2 - Aligned struct, method, and other naming to match the
+	                 module name. (Removed RunQ references.)
 */
 
 // VersionString is the version of the project.
@@ -21,7 +23,10 @@ const VersionString = "0.1.0"
 
 /*
 	ToDos:
-    [ ] Improve documentation.
+    [_] Improve documentation.
+	[ ] Proper module name.
+	[ ] Clean up remaining previous module name references. To include file
+	    renames.
 
 	Done:
 	[Q] Author. (Don't do this if you intend to publish.)

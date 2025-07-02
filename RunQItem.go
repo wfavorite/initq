@@ -4,7 +4,7 @@ import "log"
 
 /* ------------------------------------------------------------------------ */
 
-type runQItem struct {
+type initQItem struct {
 	f     QFunc
 	name  string
 	state ReqResult
@@ -13,9 +13,9 @@ type runQItem struct {
 
 /* ======================================================================== */
 
-func newRunQItem(name string, f QFunc, deps ...string) (rqi *runQItem) {
+func newInitQItem(name string, f QFunc, deps ...string) (rqi *initQItem) {
 
-	rqi = new(runQItem)
+	rqi = new(initQItem)
 
 	rqi.f = f
 	rqi.name = name
@@ -29,10 +29,10 @@ func newRunQItem(name string, f QFunc, deps ...string) (rqi *runQItem) {
 
 /* ======================================================================== */
 
-func (rqi *runQItem) run() ReqResult {
+func (rqi *initQItem) run() ReqResult {
 
 	if rqi == nil {
-		log.Fatal("nil item in the RunQ")
+		log.Fatal("nil item in the InitQ")
 	}
 
 	if rqi.state == TryAgain || rqi.state == UnRun {

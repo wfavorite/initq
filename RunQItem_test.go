@@ -2,11 +2,11 @@ package initq
 
 import "testing"
 
-func TestRunQItem(t *testing.T) {
+func TestInitQItem(t *testing.T) {
 
-	var rqi *runQItem
+	var rqi *initQItem
 
-	rqi = newRunQItem("test", func() ReqResult { return Satisfied })
+	rqi = newInitQItem("test", func() ReqResult { return Satisfied })
 
 	if rqi.state != UnRun {
 		t.Errorf("Expected UnRun on initialization")

@@ -97,15 +97,15 @@ func (cd *coredata) StartScheduler() ReqResult {
 
 /* ======================================================================== */
 
-func TestRunQ(t *testing.T) {
+func TestInitQ(t *testing.T) {
 
-	var rq *RunQ
+	var rq *InitQ
 	var cd *coredata
 
 	// ----------
 	// Simple Q, easily satisfied.
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 
 	rq.Add("one", func() ReqResult { return Satisfied })
 	rq.Add("two", func() ReqResult { return Satisfied })
@@ -122,7 +122,7 @@ func TestRunQ(t *testing.T) {
 	// ----------
 	// A Q that cannot be satisfied (unsat never gets Satisfied).
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 
 	rq.Add("good1", func() ReqResult { return Satisfied })
 	rq.Add("unsat", func() ReqResult { return TryAgain })
@@ -138,7 +138,7 @@ func TestRunQ(t *testing.T) {
 	// running because of the internal 'semaphore' requirements prevent
 	// them from running.
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 
 	rq.Add("black", func() ReqResult { return Satisfied }, "white")
 	rq.Add("white", func() ReqResult { return Satisfied }, "black")
@@ -152,7 +152,7 @@ func TestRunQ(t *testing.T) {
 	// This does *not* include the "scheduler" (that will fail).
 	// This is *mostly* in correct order.
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 	cd = new(coredata)
 
 	rq.Add("config", cd.ReadConfigFile)
@@ -169,7 +169,7 @@ func TestRunQ(t *testing.T) {
 	// This does *not* include the "scheduler" (that will fail).
 	// This in backwards (worst case scenario) order.
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 	cd = new(coredata)
 
 	rq.Add("server", cd.SetupServer)
@@ -185,7 +185,7 @@ func TestRunQ(t *testing.T) {
 	// Another realistic case - that cannot succeed.
 	// This include thes "scheduler" (that will fail).
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 	cd = new(coredata)
 
 	rq.Add("config", cd.ReadConfigFile)
@@ -204,7 +204,7 @@ func TestRunQ(t *testing.T) {
 	// ----------
 	// One item stops early
 
-	rq = NewRunQ()
+	rq = NewInitQ()
 
 	rq.Add("one", func() ReqResult { return Satisfied })
 	rq.Add("two", func() ReqResult { return Satisfied })
