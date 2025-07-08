@@ -4,6 +4,8 @@ import "log"
 
 /* ------------------------------------------------------------------------ */
 
+// initQItem contains all items necessary to define a required task, as well
+// as the optional 'semaphore' expression of requirements.
 type initQItem struct {
 	// f is the init function pointer/reference.
 	f QFunc
@@ -18,7 +20,7 @@ type initQItem struct {
 
 	// deps are optional dependent tasks (matching name) that must be Satisfied
 	// before this item can attempt to run. These are used when there is no other
-	// indication of success.
+	// indication of success of dependent tasks.
 	deps []string
 }
 
@@ -41,6 +43,8 @@ func newInitQItem(name string, f QFunc, deps ...string) (rqi *initQItem) {
 
 /* ======================================================================== */
 
+// run will run the required task function if it should be run. Once a task
+// function returns Satisfied, then it will not be run again.
 func (rqi *initQItem) run() ReqResult {
 
 	if rqi == nil {

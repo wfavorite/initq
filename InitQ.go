@@ -21,8 +21,8 @@
 //	iq := initq.NewInitQ()
 //
 //	iq.Add("cmdline", cd.ParseCommandLine) // No dependencies
-//	iq.Add("config", cd.ReadConfig)        // Command line must have been read
-//	iq.Add("service", cd.StartService)     //
+//	iq.Add("config", cd.ReadConfig)        // Command line must be parsed
+//	iq.Add("service", cd.StartService)     // Config must be read
 //
 //	if err := iq.Process() ; err != nil {
 //		fmt.Fprintln(os.Stderr, "ERROR:", cd.ErrorMsg)
@@ -64,6 +64,9 @@ type InitQ struct {
 /* ======================================================================== */
 
 // NewInitQ creates a new initialized / empty InitQ.
+//
+// Use the Add method to add required tasks to the queue, and Process to
+// run the queue to completion.
 func NewInitQ() (rq *InitQ) {
 
 	rq = new(InitQ)
@@ -75,7 +78,16 @@ func NewInitQ() (rq *InitQ) {
 
 // Add puts InitQ requirements on the initialization Q. Invalid input is fatal.
 //
-// The name is a convenient label that may be used in messaging.
+// The name is a convenient label that may be used in messaging. The label is
+// case-sensitive, so any dependency requirements must match exactly. (A const
+// label is appropriate here.)
+//
+// The second parameter is the function reference. This function is responsible
+// for understanding dependent attributes (that may be derived from environment
+// state), and returns the status of the initialization attempt.
+//
+// The final (optional) parameters are a means of expressing dependent
+// required tasks if completion cannot be derived from the environment.
 func (rq *InitQ) Add(name string, f QFunc, deps ...string) {
 
 	// Fatal on misuse is appropriate.
@@ -87,7 +99,7 @@ func (rq *InitQ) Add(name string, f QFunc, deps ...string) {
 	}
 
 	// Check inputs...
-	// ...but we only care about the funciton input.
+	// ...but we only care about the function input.
 	if f == nil {
 		log.Fatal("Method Add called on a nil function.")
 	}

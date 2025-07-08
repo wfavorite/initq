@@ -63,7 +63,7 @@ The typical error case is an *application thing* and should be handled by the ap
 
 ## Semaphore mode
 
-Dependent requirement labels may be added to the ``Add()`` method. These are used to detect task completion when there is no other evidence of such.
+Dependent requirement labels may be added as optional parameters to the ``Add()`` method. These are used to detect task completion when there is no other evidence of such.
 
 > __NOTE:__
 >> The desired pattern is to *sense* if a dependency has completed. For example: When the config has been parsed, a reference to a struct containing config options may be an indicator that it was parsed. If the reference is ``nil``, then the config was never parsed. (In this case) The *pointer* is the semaphore.

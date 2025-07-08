@@ -25,18 +25,25 @@ package initq
 				     re-write).
 				   - Official module path was changed.
 				   - Versioned 0.3.0.
+	0.3.1   25-7-8 - Minor documentation cleanup.
 */
 
 // VersionString is the version of the project.
-const VersionString = "0.3.0"
+const VersionString = "0.3.1"
 
 /*
 	ToDos:
+	[ ] Add should sanity check to see if the name matches any of the deps.
+	[ ] Consider jumping to v1. I use "GNU-style" versioning that may remain
+	    at 0.something for a million years. (0 is a valid version just as it
+		is a valid number - IMHO.) On the other hand, pkg.go.dev only flags
+		"Stable" when >= v1.
 	[ ] Clearer documentation is always appreciated. This is a low-priority ask
 	    and is not tied to a specific deliverable. That said, ALL types, funcs,
 		etc... should have clear and complete documentation.
 
 	Done:
+	[X] Write a 'dummy' app to require/import this module.
 	[X] Proper module name.
 	[X] Improve documentation.
 	[X] Clean up remaining previous module name references. To include file
