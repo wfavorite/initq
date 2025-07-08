@@ -40,6 +40,13 @@
 //
 //	rq.Add("settime", SetSystemClock)            // No clear indicator of success
 //	rq.Add("runsvc" , cd.RunService, "settime")  // Explicitly requires settime success
+//
+// It is possible that an init queue could be constructed that cannot be
+// satisfied. This happens when circular dependencies are created or the
+// task fails to detect dependent tasks and/or never returns a Satisfied value.
+// These conditions are considered 'build time' problems, and will trigger
+// a log.Fatal() assertion - such that the problem is likely to be discovered
+// in test rather than regular use.
 package initq
 
 import (

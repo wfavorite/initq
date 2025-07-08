@@ -26,10 +26,11 @@ package initq
 				   - Official module path was changed.
 				   - Versioned 0.3.0.
 	0.3.1   25-7-8 - Minor documentation cleanup.
+	0.3.2   25-7-8 - Dangling save - documentation related.
 */
 
 // VersionString is the version of the project.
-const VersionString = "0.3.1"
+const VersionString = "0.3.2"
 
 /*
 	ToDos:
