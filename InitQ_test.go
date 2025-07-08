@@ -1,10 +1,13 @@
 package initq
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 /* ======================================================================== */
 /*
-	This is the CoreData structure that sits at the heart of the application.
+	This is the CoreData structure that sits at the heart of the 'application'.
 	The initialization methods are called on it, to initialize data in it,
 	and processes that use it.
 
@@ -81,6 +84,8 @@ func (cd *coredata) SetupServer() ReqResult {
 	return Satisfied
 }
 
+// StartScheduler will never be Satisfied due to an omission in the SetupServer
+// method.
 func (cd *coredata) StartScheduler() ReqResult {
 
 	// TYPO ERROR: (on purpose) See SetupServer note.
@@ -182,8 +187,25 @@ func TestInitQ(t *testing.T) {
 	}
 
 	// ----------
+	// A standard-ish case that should pass.
+	// ...but with TryProcess()
+	// BehaveUnresolvIsErr is true
+
+	rq = NewInitQ()
+	cd = new(coredata)
+
+	rq.Add("server", cd.SetupServer)
+	rq.Add("dbconn", cd.SetupDBConnection)
+	rq.Add("config", cd.ReadConfigFile)
+	rq.Add("cmdline", cd.ParseCommandLIne)
+
+	if err := rq.TryProcess(); err != nil {
+		t.Errorf("Q did not finish - %s", err.Error())
+	}
+
+	// ----------
 	// Another realistic case - that cannot succeed.
-	// This include thes "scheduler" (that will fail).
+	// This include the "scheduler" (that will fail).
 
 	rq = NewInitQ()
 	cd = new(coredata)
@@ -198,7 +220,94 @@ func TestInitQ(t *testing.T) {
 		t.Errorf("An unresolvable Q managed to finish.")
 	}
 
-	// Explicitly clear the Behaviour on exit.
+	// ----------
+	// A dependency was typo'd.
+
+	rq = NewInitQ()
+
+	rq.Add("black", func() ReqResult { return Satisfied }, "white")
+	rq.Add("white", func() ReqResult { return Satisfied }, "blue")
+
+	if err := rq.Process(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	}
+
+	// ----------
+	// An Add call self-references in the dependencies.
+
+	rq = NewInitQ()
+
+	rq.Add("selfref", func() ReqResult { return Satisfied }, "selfref")
+	if err := rq.Process(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	} else {
+		if !strings.Contains(err.Error(), "Add(selfref)") {
+			t.Errorf("Expected a specific error - got %s", err.Error())
+		}
+	}
+
+	// ----------
+	// An Add call with a blank label.
+
+	rq = NewInitQ()
+
+	rq.Add("", func() ReqResult { return Satisfied })
+	if err := rq.Process(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	} else {
+		if !strings.Contains(err.Error(), "Add") {
+			t.Errorf("Expected a specific error - got %s", err.Error())
+		}
+	}
+
+	// ----------
+	// An Add call with a nil function reference.
+
+	rq = NewInitQ()
+
+	rq.Add("nilfunc", nil)
+	if err := rq.Process(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	} else {
+		if !strings.Contains(err.Error(), "Add(nilfunc)") {
+			t.Errorf("Expected a specific error - got %s", err.Error())
+		}
+	}
+
+	// ----------
+	// An Add call with invalid dependency name.
+
+	rq = NewInitQ()
+
+	rq.Add("cmdline", func() ReqResult { return Satisfied })
+	rq.Add("config", func() ReqResult { return Satisfied }, "CmdLine")
+
+	if err := rq.Process(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	} else {
+		if !strings.Contains(err.Error(), "CmdLine") {
+			t.Errorf("Expected a specific error - got %s", err.Error())
+		}
+	}
+
+	// ----------
+	// An Add call with redundant/typo name label.
+
+	rq = NewInitQ()
+
+	rq.Add("cmdline", func() ReqResult { return Satisfied })
+	rq.Add("cmdline", func() ReqResult { return Satisfied })
+
+	if err := rq.Process(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	} else {
+		if !strings.Contains(err.Error(), "cmdline") {
+			t.Errorf("Expected a specific error - got %s", err.Error())
+		}
+	}
+
+	// Explicitly clear the Behaviour on completion of 'internal'
+	// error detection.
 	BehaveUnresolvIsErr = false
 
 	// ----------
@@ -217,6 +326,55 @@ func TestInitQ(t *testing.T) {
 	} else {
 		if err != ErrQStopped {
 			t.Errorf("Expected the Q to be err/stopped")
+		}
+	}
+
+	// ----------
+	// A standard-ish case that should pass.
+	// ...but with TryProcess()
+	// BehaveUnresolvIsErr is false
+
+	rq = NewInitQ()
+	cd = new(coredata)
+
+	rq.Add("server", cd.SetupServer)
+	rq.Add("dbconn", cd.SetupDBConnection)
+	rq.Add("config", cd.ReadConfigFile)
+	rq.Add("cmdline", cd.ParseCommandLIne)
+
+	if err := rq.TryProcess(); err != nil {
+		t.Errorf("Q did not finish - %s", err.Error())
+	}
+
+	// ----------
+	// TryProcess - the fail case
+	// This include the "scheduler" (that will fail).
+
+	rq = NewInitQ()
+	cd = new(coredata)
+
+	rq.Add("config", cd.ReadConfigFile)
+	rq.Add("cmdline", cd.ParseCommandLIne)
+	rq.Add("dbconn", cd.SetupDBConnection)
+	rq.Add("server", cd.SetupServer)
+	rq.Add("scheduler", cd.StartScheduler)
+
+	if err := rq.TryProcess(); err == nil {
+		t.Errorf("An unresolvable Q managed to finish.")
+	} else {
+		if uqe, ok := err.(*QUnresolvable); ok {
+
+			tasks := uqe.UnresolvedTasks()
+
+			if len(tasks) != 1 {
+				t.Errorf("Unexpected number of remaining tasks. Expected 1; found %d.", len(tasks))
+			} else {
+				if tasks[0] != "scheduler" {
+					t.Errorf("Unexpected unresolved task. Expected scheduler, got %s", tasks[0])
+				}
+			}
+		} else {
+			t.Errorf("Failed to match against *QUnresolvable type. Got %T", err)
 		}
 	}
 

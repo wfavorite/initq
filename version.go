@@ -27,23 +27,42 @@ package initq
 				   - Versioned 0.3.0.
 	0.3.1   25-7-8 - Minor documentation cleanup.
 	0.3.2   25-7-8 - Dangling save - documentation related.
+	0.4.0   25-7-8 - Added input sanity checks around task labels. This keeps
+	                 the caller from adding self-referencing or typo'd
+					 dependencies. All are considered fatal/assertions.
+				   - Documentation cleanup and improvements.
+				   - Test code coverage expanded, all tests pass.
+				   - Added new TryProcess method. (...that frankly risks
+				     "overloading" the module. I think it is a valid use
+					 case, and may be appealing - it is better to handle an
+					 error than a Fatal call... perhaps. (Commentary on this
+					 subject was added to the Readme doc.) Includes test
+					 coverage. All tests pass.
 */
 
 // VersionString is the version of the project.
-const VersionString = "0.3.2"
+const VersionString = "0.4.0"
 
 /*
 	ToDos:
-	[ ] Add should sanity check to see if the name matches any of the deps.
 	[ ] Consider jumping to v1. I use "GNU-style" versioning that may remain
 	    at 0.something for a million years. (0 is a valid version just as it
 		is a valid number - IMHO.) On the other hand, pkg.go.dev only flags
 		"Stable" when >= v1.
-	[ ] Clearer documentation is always appreciated. This is a low-priority ask
-	    and is not tied to a specific deliverable. That said, ALL types, funcs,
-		etc... should have clear and complete documentation.
 
 	Done:
+	[X] I explicitly created a case where passing a specific command line
+	    argument caused a Q that could not be satisfied. Honestly, i have not
+		seen this as a case - although it *could* be. The behavour handles
+		this case and it is exposed/public. Nonetheless, it may be nice to
+		have a modified Process() to handle such conditions. (The flag module
+		has two different Parse() cases - one returns error, one does not.
+	[X] Add should sanity check to see if the name matches any of the deps.
+	    Likewise, Process should check if a dependency name does *not* match a
+		required task.
+	[X] Clearer documentation is always appreciated. This is a low-priority ask
+	    and is not tied to a specific deliverable. That said, ALL types, funcs,
+		etc... should have clear and complete documentation.
 	[X] Write a 'dummy' app to require/import this module.
 	[X] Proper module name.
 	[X] Improve documentation.

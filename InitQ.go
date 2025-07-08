@@ -50,7 +50,9 @@
 package initq
 
 import (
+	"fmt"
 	"log"
+	"slices"
 	"strings"
 )
 
@@ -66,6 +68,11 @@ type QFunc func() ReqResult
 type InitQ struct {
 	// q is the to-run list.
 	q []*initQItem
+
+	// addErr captures errors in the Add call so that they may be handled in
+	// the Process call. The intent is to keep Add calls 'clean', yet still
+	// capture failures in a testable manner.
+	addErr string
 }
 
 /* ======================================================================== */
@@ -105,10 +112,33 @@ func (rq *InitQ) Add(name string, f QFunc, deps ...string) {
 		log.Fatal("Add called on a nil InitQ.")
 	}
 
-	// Check inputs...
-	// ...but we only care about the function input.
+	// Check inputs.
+	if len(name) == 0 {
+		rq.addErr = "Add called with an empty name label."
+		if BehaveUnresolvIsErr {
+			return
+		}
+		log.Fatal(rq.addErr)
+	}
+
+	// A function reference must be passed.
 	if f == nil {
-		log.Fatal("Method Add called on a nil function.")
+		rq.addErr = fmt.Sprintf("Add(%s) called with a nil function.", name)
+		if BehaveUnresolvIsErr {
+			return
+		}
+		log.Fatal(rq.addErr)
+	}
+
+	// None of the deps should self-reference.
+	for _, d := range deps {
+		if d == name {
+			rq.addErr = fmt.Sprintf("Add(%s) called with a self-referencing dependency.", name)
+			if BehaveUnresolvIsErr {
+				return
+			}
+			log.Fatal("Unable to add a self-referencing dependency.")
+		}
 	}
 
 	// Initialize and append to the Q.
@@ -127,12 +157,86 @@ func (rq *InitQ) Add(name string, f QFunc, deps ...string) {
 // ErrQStopped error. This is returned when a requirement function (sets an
 // error and) returns the Stop value.
 func (rq *InitQ) Process() (err error) {
+	// The default behaviour.
+	return rq.process(false)
+}
+
+/* ======================================================================== */
+
+// TryProcess is used to iteratively work all items in the Q until they are
+// satisfied. If the Q cannot be processed to completion in an expected number
+// of iterations, then an error of type ErrQUnsolvable is returned.
+//
+// Under normal conditions, the only error returned from this method is the
+// ErrQStopped error. This is returned when a requirement function (sets an
+// error and) returns the Stop value. If user input causes an unresolvable Q
+// and the desire is to handle this as an error (much easier to pass to the
+// user than a Fatal() call) then this function is more appropriate than the
+// Process() variant.
+func (rq *InitQ) TryProcess() (err error) {
+	// The modified behaviour.
+	return rq.process(true)
+}
+
+/* ======================================================================== */
+
+// process is the common implementation of both Process and TryProcess. It
+// takes a boolean to enable (true) the return of a dedicated error, rather
+// than a log.Fatal(). The error is comparable, so will not have distinct
+// messaging about why the Q could not be satisfied, and the caller will need
+// to handle that
+func (rq *InitQ) process(unsatIsError bool) (err error) {
 
 	// Fatal is appropriate.
 	// Discussion on *why* is in the Add method.
 	if rq == nil {
-		log.Fatal("Method Add called on a nil function.")
+		log.Fatal("Method Process called on a nil function.")
 	}
+
+	// Handle any errors that may have been created. There is no need to test
+	// the behaviour as that is the only way this internal error message is
+	// set.
+	if len(rq.addErr) > 0 {
+		// The error message is kind of useless as it is not explicitly
+		// returned. The value is the ability to test for the specific error
+		// type.
+		return fmt.Errorf("%s", rq.addErr)
+	}
+
+	// Check to see if any dependencies are 'dangling'. This is the case
+	// where a 'semaphore' dependency references a task that does not exist.
+	// This cannot be checked in the Add calls.
+	// First build a simpler lookup list.
+	validLabels := make([]string, 0)
+	for _, task := range rq.q {
+
+		// This part *could* be done in Add - but easier here.
+		if slices.Contains(validLabels, task.name) {
+
+			fatalMsg := fmt.Sprintf("The %s task label was used more than once.", task.name)
+			if BehaveUnresolvIsErr {
+				// This is unreachable under normal circumstances.
+				return fmt.Errorf("%s", fatalMsg)
+			}
+			log.Fatalf("%s", fatalMsg)
+		}
+
+		validLabels = append(validLabels, task.name)
+	}
+	// Now walk all dependencies looking for solid matches.
+	for _, task := range rq.q {
+		for _, dep := range task.deps {
+			if !slices.Contains(validLabels, dep) {
+				fatalMsg := fmt.Sprintf("Task %s has dependency %s that does not match any existing task.", task.name, dep)
+				if BehaveUnresolvIsErr {
+					// This is unreachable under normal circumstances.
+					return fmt.Errorf("%s", fatalMsg)
+				}
+				log.Fatalf("%s", fatalMsg)
+			}
+		}
+	}
+	// End of dependency / label sanity checks.
 
 	passes := 0
 	qlen := len(rq.q)
@@ -141,6 +245,7 @@ func (rq *InitQ) Process() (err error) {
 	// passes.
 	for passes <= qlen {
 
+		// Assume the Q has been satisfied - unless shown otherwise.
 		satisfied := true
 
 		// The next loop is a pass of the InitQ.
@@ -161,12 +266,20 @@ func (rq *InitQ) Process() (err error) {
 			}
 
 			// "run" each item. If previously satisfied, the run will be
-			// skipped.
+			// skipped. We only care about the 'unsatisfied' cases (that prove
+			// the Q unsatisfied) - which means we go around again.
 			switch rqi.run() {
 			case UnRun:
 				// This case really should not need to be handled here. I am
-				// leaving this here in the event design changes such that
-				satisfied = false
+				// leaving this here in the event design changes such that it
+				// comes to be. Testing for it will be difficult without some
+				// sort of complication / interface on the run method. It is
+				// at least captured and handled.
+				fatalMsg := fmt.Sprintf("Failed to process task %s.", rqi.name)
+				if BehaveUnresolvIsErr {
+					return fmt.Errorf("%s", fatalMsg)
+				}
+				log.Fatalf("%s", fatalMsg)
 			case TryAgain:
 				satisfied = false
 			case Stop:
@@ -186,29 +299,39 @@ func (rq *InitQ) Process() (err error) {
 	// The Q has now run as many times as there are items in the Q. Assuming a
 	// worst case ordering of requirements, it *should* be satisfied by now.
 	//
-	// Reaching here is an assert/fatal condition. It is not a transient
-	// runtime thing, but a failure in setup of the module. (Eg: defining a Q
-	// with circular / unresolvable requirements.)
+	// Reaching here is (typically) an assert/fatal condition. It is not a
+	// transient runtime thing, but a failure in setup of the module. (Eg:
+	// defining a Q with circular / unresolvable requirements.)
 	//
-	// The goal here is to help the user understand what items were unable to
-	// be satisfied.
+	// The goal here is to help the caller understand what items were unable to
+	// be satisfied / not cause a Fatal() assertion when undesirable.
 	//
 	// The return / exit type can be modified with the BehaveUnresolvIsErr
-	// behaviour 'toggle'.
+	// behaviour 'toggle' or the unsatIsError method parameter.
 
-	if BehaveUnresolvIsErr == false {
-
-		remaining := make([]string, 0)
-		for _, rqi := range rq.q {
-			if rqi.state == TryAgain {
-				remaining = append(remaining, rqi.name)
-			}
+	// Generate the error message content (even if it is not used).
+	remaining := make([]string, 0)
+	for _, rqi := range rq.q {
+		if rqi.state == TryAgain {
+			remaining = append(remaining, rqi.name)
 		}
+	}
+
+	// The explicit / priority case: The caller wants a meaningful message.
+	if unsatIsError {
+		err = newQUnresolvable(remaining)
+		return
+	}
+
+	// This *excludes* the testable case - with a standard / comparable error.
+	// The value is inverted (== false) so that the method ends with a return.
+	if BehaveUnresolvIsErr == false {
 		log.Fatalf("run Q cannot be satisfied (%s remain)", strings.Join(remaining, ","))
 	}
 
-	// This is unreachable under normal circumstances.
+	// The original / designed for test case.
 	return ErrQUnsolvable
+
 }
 
 /* ======================================================================== */
