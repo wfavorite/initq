@@ -5,17 +5,20 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
+# Temp notes:
+# - The matrix part does not appear to be the problem.
+# - Indentation / syntax of the upload does appear to be a problem.
+# - Renamed the job.
+
+
 name: Go
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-
-  build:
+  test:
     # https://github.com/actions/runner-images
     runs-on: ubuntu-latest
     strategy:
@@ -32,13 +35,13 @@ jobs:
         check-latest: true
         cache: false
         cache-dependency-path: "go.sum"
-    - run: go test -json > TestResults-${{ matrix.go-version }}.json
+    - run: go test
         #run: go test ./... 
         
         # https://github.com/actions/upload-artifact
-    - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: Go-results-${{ matrix.go-version }}
-          path: TestResults-${{ matrix.go-version }}.json
+#    - name: Upload test results
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: Go-results-${{ matrix.go-version }}
+#          path: TestResults-${{ matrix.go-version }}.json
  
