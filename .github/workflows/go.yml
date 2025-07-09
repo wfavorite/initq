@@ -9,6 +9,7 @@
 # - The matrix part does not appear to be the problem.
 # - Indentation / syntax of the upload does appear to be a problem.
 # - Renamed the job.
+# - Removed the explicit version (that does not appear to be used).
 
 
 name: Go
@@ -31,12 +32,14 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '>=1.24.0'
+        #go-version: '>=1.24.0'
         check-latest: true
+        # cache: false turns off the search for go.sum (that does not exist in
+        # a project without dependencies).
         cache: false
         cache-dependency-path: "go.sum"
-    - run: go test
-        #run: go test ./... 
+    - run: go test -v
+
         
         # https://github.com/actions/upload-artifact
 #    - name: Upload test results
