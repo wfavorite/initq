@@ -1,3 +1,7 @@
+# VOIR: I typo'd the directory name, and github created something different.
+# VOIR: - It assumed build (on a module).
+# VOIR: - It used downlevel everything.
+# VOIR: I merged my edits back into this version.
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
@@ -12,17 +16,25 @@ on:
 jobs:
 
   build:
+    # https://github.com/actions/runner-images
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.23', '1.24.x' ]
     steps:
+    # https://github.com/actions/setup-go/pkgs/container/checkout
     - uses: actions/checkout@v4
-
+    # https://github.com/actions/setup-go/pkgs/container/setup-go
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.20'
-
-    - name: Build
-      run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
+        go-version: ${{ matrix.go-version }}
+    - name: Run go test
+        run: go test -json > TestResults-${{ matrix.go-version }}.json
+        # https://github.com/actions/upload-artifact
+    - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Go-results-${{ matrix.go-version }}
+          path: TestResults-${{ matrix.go-version }}.json
+ 

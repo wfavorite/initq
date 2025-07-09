@@ -42,8 +42,10 @@ package initq
 	                 rather than direct assignment. Not a requirement, but
 	                 'proper'.
 	               - Added github action for test.
-				   - Not tagged at this time (until action is shown working).
-				   - All tests pass.
+	               - Not tagged at this time (until action is shown working).
+	               - All tests pass.
+	               - Merge of github supplied action and my needs. (Notes are
+	                 in the go.yml file.)
 */
 
 // VersionString is the version of the project.
