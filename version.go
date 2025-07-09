@@ -46,6 +46,7 @@ package initq
 	               - All tests pass.
 	               - Merge of github supplied action and my needs. (Notes are
 	                 in the go.yml file.)
+	               - Multiple unversioned pushes to resolve go.yml action.
 */
 
 // VersionString is the version of the project.
@@ -53,13 +54,13 @@ const VersionString = "0.5.0"
 
 /*
 	ToDos:
-	[_] Presumably github has a "tests pass" functionality. Wire this up if so.
 	[ ] Consider jumping to v1. I use "GNU-style" versioning that may remain
 	    at 0.something for a million years. (0 is a valid version just as it
 	    is a valid number - IMHO.) On the other hand, pkg.go.dev only flags
 	    "Stable" when >= v1.
 
 	Done:
+	[X] Presumably github has a "tests pass" functionality. Wire this up if so.
 	[X] Alignment of this file breaks when viewed online. Tabs & spaces mix is
 	    to blame.
 	[X] I explicitly created a case where passing a specific command line
