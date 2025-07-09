@@ -28,7 +28,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: '1.24.x'
     - name: Run go test
         #run: go test ./... -json > TestResults-${{ matrix.go-version }}.json
         run: go test
