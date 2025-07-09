@@ -2,6 +2,7 @@ package initq
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -25,8 +26,15 @@ type QUnresolvable struct {
 func newQUnresolvable(remains []string) (err *QUnresolvable) {
 	err = new(QUnresolvable)
 
-	// Just assign the list directly.
-	err.unsat = remains
+	// VOIR: This was originally a direct assignment. Technically, a direct
+	// VOIR: assignment is incorrect as you can not be sure that the backing
+	// VOIR: array that is referenced does not change. In this case (of an
+	// VOIR: internal error) the backing data does not change. I chose to do
+	// VOIR: the proper way when the simple / incorrect would have worked.
+	// VOIR:
+	// VOIR: There are multiple methods for the copy... a for-range loop,
+	// VOIR: a make-copy sequence, or slices.Clone(). I chose slices.Clone().
+	err.unsat = slices.Clone(remains)
 
 	return err
 }
@@ -49,7 +57,9 @@ func (qur QUnresolvable) Error() (msg string) {
 // UnresolvedTasks returns the tasks that were not satisfied. This eliminates
 // the need to parse them out of the Error() output.
 func (qur QUnresolvable) UnresolvedTasks() (unsat []string) {
-	// Simple assignment of the array.
+	// Simple assignment of the array. Unlike the creation of the error where
+	// the input is copied, this is just a reference to the original in the
+	// error struct.
 	unsat = qur.unsat
 	return
 }

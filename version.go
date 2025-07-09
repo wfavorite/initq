@@ -38,14 +38,20 @@ package initq
 	                 error than a Fatal call... perhaps. (Commentary on this
 	                 subject was added to the Readme doc.) Includes test
 	                 coverage. All tests pass.
+	0.5.0   25-7-9 - The QUnresovable creation now uses a safer copy method
+	                 rather than direct assignment. Not a requirement, but
+	                 'proper'.
+	               - Added github action for test.
+				   - Not tagged at this time (until action is shown working).
+				   - All tests pass.
 */
 
 // VersionString is the version of the project.
-const VersionString = "0.4.0"
+const VersionString = "0.5.0"
 
 /*
 	ToDos:
-	[ ] Presumably github has a "tests pass" functionality. Wire this up if so.
+	[_] Presumably github has a "tests pass" functionality. Wire this up if so.
 	[ ] Consider jumping to v1. I use "GNU-style" versioning that may remain
 	    at 0.something for a million years. (0 is a valid version just as it
 	    is a valid number - IMHO.) On the other hand, pkg.go.dev only flags
